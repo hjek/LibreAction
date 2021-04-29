@@ -1,3 +1,4 @@
 specs
+data/config.pl
+data/actions/*
 data/signups.pl
-data/email.pl

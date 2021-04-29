@@ -3,19 +3,19 @@
 :- module(gcn, [main/1]).
 :- autoload_path(library(http)).
 :- use_module(library(persistency)).
-
 :- (not(pack_info(smtp)) -> pack_install(smtp); true), use_module(library(smtp)).
-:- persistent commitment(action_id, email, time, ready).
+
+:- expand_file_name('data/*config.pl',[Configuration|_]),
+   consult(Configuration).
+
+:- persistent commitment(details).
 :- db_attach('data/signups.pl', []).
 
 :- dynamic action/2.
-:- consult('data/email.pl').
 :- retractall(action(_,_)),
-   expand_file_name('data/actions/*.pl',Action_files),
+   expand_file_name('data/*actions',[Actions_dir|_]),
+   findall(Action_file,directory_member(Actions_dir,Action_file,[]),Action_files),
    maplist(load_files,Action_files).
-
-serve(Port) :-
-  http_server(http_dispatch, [port(Port)]).
 
 :- http_handler(root(.),
 	root_handler,[]).
@@ -26,6 +26,7 @@ serve(Port) :-
 
 user:file_search_path(static, 'data/static').
 :- http_handler(root(.), serve_files_in_directory(static), [prefix]).
+
 
 root_handler(Request):-
 	http_parameters(Request,[
@@ -49,8 +50,8 @@ action_header(Id,Element) :-
 	http_link_to_id(action_handler, [id(Id)], Action_link),
 	http_link_to_id(root_handler, [category(Category)], Category_link),
 	http_link_to_id(root_handler, [location(Location)], Location_link),
-	Element = header([
-	a(href(Action_link),h2(Title)),
+	Element = header(class(action),[
+	h2(a(href(Action_link),Title)),
 	div(class(location),a(href(Location_link),Location)),
 	div(class(category),a(href(Category_link),Category))]).
 
@@ -59,28 +60,44 @@ action_body(Id,Element) :-
 	member(description(Description),Details),
 	action_progress(Id,Progress),
 	action_signup_form(Id,Signup_form),
+	action_share(Id,Share),
 	Element = div([
 		Progress,
+		Share,
 		article(p(Description)),
 		Signup_form]).
+
+action_share(Id,Element) :-
+	site(Site),
+	http_link_to_id(action_handler, [id(Id)], Action_link),
+	action(Id,Details),
+	member(title(Title),Details),
+	swritef(Mailto_link,'mailto:?subject=%w&body=%w%w',[Title,Site,Action_link]),
+	Element = div(class(share),a(href(Mailto_link), 'Invite friends to attend')).
 
 action_progress(Id,Element) :-
 	action(Id,Details),
 	member(target(Target),Details),
 	action_commitments_count(Id, Signups_count),
-	Element = p([
-			label([Signups_count,' of ',Target,' have committed.']),
+	Element = div([
+			small(label([Signups_count,' have committed so far. The goal is ',Target,' commitments.'])),
 			progress([max(Target), value(Signups_count)],[])]).
 
 action_signup_form(Id,Element) :-
 	Element = form([action(action),method(post)],fieldset([
 		legend('Get involved'),
-		div(input([name(email), type(email), required(required), placeholder('my_name@example.com')],[])),
-		div(button([id(ready),type(submit), name(ready), value(true)], 'I\'m ready, sign me up now')),
-		div(button([id(not_ready),type(submit), name(ready), value(false)], 'I\'m not ready yet')),
-		input([name(action), type(hidden), value(Id)],[])
+		input([name(action), type(hidden), value(Id)],[]),
+		p(input([name(email), type(email), required(required), placeholder('my_name@example.com')],[])),
+		p(button([class(ready),type(submit), name(ready), value(true)], 'I\'m ready, sign me up now')),
+		details([summary('I\'m not ready yet'),
+			ul([
+			li('Which of the following would support you sufficiently to be ready?'),
+			li(label([input([type(checkbox), name(support), value(childcare)]), 'I need free child care.'])),
+			li(label([input([type(checkbox), name(support), value(transport)]), 'I need transport to and back.'])),
+			li(label([input([type(checkbox), name(support), value(friend)]), 'I need to be invited by a friend.']))
+			]),
+			p(button([class(ready),type(submit), name(ready), value(true)], 'Sign me up'))])
 		])).
-
 
 category_location_actions(Category,Location,Action_list):-
 	findall(List_item,
@@ -92,9 +109,20 @@ category_location_actions(Category,Location,Action_list):-
 	   ),
 	  Action_list).
 
+active_filter(Category,_Location,Filter):-
+	ground(Category),
+	Filter=p(['Category: ', Category]).
+
+active_filter(_Category,Location,Filter):-
+	ground(Location),
+	Filter=p(['Location: ', Location]).
+
+active_filter(_,_,p([])).
+
 action_list_page(Category,Location,Page) :-
+	active_filter(Category,Location,Filter),
 	category_location_actions(Category,Location,List),
-	Page = nav(ul(List)).
+	Page = div([Filter,nav(ul(List))]).
 
 action_handler(get, Request):-
 	http_parameters(Request,[
@@ -106,12 +134,13 @@ action_handler(post, Request):-
 	http_parameters(Request,[
 		action(Id, [optional(false)]),
 		email(Email, [length > 1]),
-		ready(Ready, [length > 1])
+		ready(Ready, [length > 1]),
+		support(Support, [list(atom)])
 		]),
 	get_time(Now),
 	% check that action exists
 	action(Id, _),
-	assert_commitment(Id, Email, Now, Ready),
+	assert_commitment([id(Id), email(Email), time(Now), ready(Ready), support(Support)]),
 	send_signup_confirmation_email(Email,Id),
 	notify_everyone_if_ready(Id),
 	http_link_to_id(action_handler, [id(Id)], Link),
@@ -122,7 +151,7 @@ action_handler(post, Request):-
 	reply_gcn_page(Page).
 
 action_commitments_count(Action_id, Commitments_count) :-
-  findall(_Commitment, commitment(Action_id,_Email,_Time,_Ready), Commitments),
+  findall(_Commitment, (commitment(Details), member(id(Action_id),Details)), Commitments),
   length(Commitments, Commitments_count).
 
 target_reached(Action_id) :-
@@ -151,6 +180,7 @@ text_stream(Text, Out) :-
 	format(Out, Text, []).
 
 send_email(Email_to,Subject,Body) :-
+	clause(email(_,_,_),_),
 	email(smtp(SMTP),from(From),auth(Password)),
 	thread_create(
 		smtp_send_mail(
@@ -187,13 +217,18 @@ notify_everyone_if_ready(Action_id):-
 	target_reached(Action_id),
 	findall(
 	  Email,
-	  (commitment(Action_id, Email, _Time, _Ready),
-	    notify(Email,Action_id)),
+	  (commitment(Details),
+	   member(id(Action_id),Details),
+	   member(email(Email),Details),
+	   notify(Email,Action_id)),
 	  _Emails).
 
 notify_everyone_if_ready(_Action_id):-
 	true.
 
-main(_Args):-
-	serve(8080).
+main(Argv):-
+	argv_options(Argv, _RestArgv, Options),
+	(member(port(Port),Options) -> true; Port=8080),
+	writef("Serving on :%w.\n", [Port]),
+	http_server(http_dispatch, [port(Port)]).
 
