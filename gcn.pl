@@ -98,17 +98,19 @@ action_list_page(Category,Location,Page) :-
 
 action_handler(get, Request):-
 	http_parameters(Request,[
-		id(Action_id, [nonneg])]),
+		id(Action_id,[])]),
 	signup_page(Action_id,Page),
 	reply_gcn_page(Page).
 
 action_handler(post, Request):-
 	http_parameters(Request,[
-		action(Id, [nonneg, optional(false)]),
+		action(Id, [optional(false)]),
 		email(Email, [length > 1]),
 		ready(Ready, [length > 1])
 		]),
 	get_time(Now),
+	% check that action exists
+	action(Id, _),
 	assert_commitment(Id, Email, Now, Ready),
 	send_signup_confirmation_email(Email,Id),
 	notify_everyone_if_ready(Id),
@@ -161,7 +163,7 @@ send_email(Email_to,Subject,Body) :-
 		   auth_method(login),
 		   security(starttls)
 		  ]),
-		_Thread).
+		_Thread),!.
 
 send_email(_,_,_) :-
 % if email is not set up

@@ -1,10 +1,10 @@
 :- assert(action(
-	2,
+	critical_mass,
 	[
-	title('critical mass'),
+	title('Critical mass'),
 	description('If we\'re 50 bicyclists, we can take over the streets.'),
 	target(50),
-	category('bicycles'),
-	location('copenhagen')
+	category('traffic'),
+	location('Copenhagen')
 	]
 )).
