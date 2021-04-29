@@ -50,21 +50,22 @@ action_header(Id,Element) :-
 	http_link_to_id(action_handler, [id(Id)], Action_link),
 	http_link_to_id(root_handler, [category(Category)], Category_link),
 	http_link_to_id(root_handler, [location(Location)], Location_link),
+	action_progress(Id,Progress),
 	Element = header(class(action),[
 	h2(a(href(Action_link),Title)),
-	div(class(location),a(href(Location_link),Location)),
-	div(class(category),a(href(Category_link),Category))]).
+	div([
+		span(class(location),a(href(Location_link),Location)), ' | ',
+		span(class(category),a(href(Category_link),Category))]),
+	Progress]).
 
 action_body(Id,Element) :-
 	action(Id,Details),
 	member(description(Description),Details),
-	action_progress(Id,Progress),
 	action_signup_form(Id,Signup_form),
 	action_share(Id,Share),
 	Element = div([
-		Progress,
-		Share,
 		article(p(Description)),
+		Share,
 		Signup_form]).
 
 action_share(Id,Element) :-
@@ -73,14 +74,14 @@ action_share(Id,Element) :-
 	action(Id,Details),
 	member(title(Title),Details),
 	swritef(Mailto_link,'mailto:?subject=%w&body=%w%w',[Title,Site,Action_link]),
-	Element = div(class(share),a(href(Mailto_link), 'Invite friends to attend')).
+	Element = p(class(share),a(href(Mailto_link), 'Invite friends to attend.')).
 
 action_progress(Id,Element) :-
 	action(Id,Details),
 	member(target(Target),Details),
 	action_commitments_count(Id, Signups_count),
 	Element = div([
-			small(label([Signups_count,' have committed so far. The goal is ',Target,' commitments.'])),
+			small(label([Signups_count,' of ',Target,' commitments.'])),
 			progress([max(Target), value(Signups_count)],[])]).
 
 action_signup_form(Id,Element) :-
@@ -140,12 +141,19 @@ action_handler(post, Request):-
 	get_time(Now),
 	% check that action exists
 	action(Id, _),
+	% prevent duplicate signups
+	(commitment(Details),
+	 member(email(Email),Details),
+	 member(id(Id),Details) ->
+	   retract_commitment(Details); true),
 	assert_commitment([id(Id), email(Email), time(Now), ready(Ready), support(Support)]),
+	action_share(Id,Share),
 	send_signup_confirmation_email(Email,Id),
 	notify_everyone_if_ready(Id),
 	http_link_to_id(action_handler, [id(Id)], Link),
 	Page = div([
 	  p('Thanks for signing up!'),
+	  Share,
 	  % Should show similar actions instead, perhaps
 	  p(a(href(Link),'Return to action page.'))]),
 	reply_gcn_page(Page).

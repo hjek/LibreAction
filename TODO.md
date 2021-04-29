@@ -6,6 +6,7 @@
 	- Receive email confirmation
 - Notification when the action target is reached
 - Progress bar for each action
+- Email invitation links
 
 # TODOs
 - Verify submitted emails

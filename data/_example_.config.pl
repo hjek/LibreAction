@@ -1,11 +1,13 @@
 :- module(email, [email/3, site/1]).
 
-% Please fill in your email configuration and save as email.pl
+%email(
+%   % host
+%   smtp('smtp.example.com'),
+%   % from
+%   from('hello@example.com'),
+%   % user-password
+%   auth('hello@example.com'-'1234')
+%    ).
 
-email(
-   smtp('smtp.example.com'), % host
-   from('hello@example.com'), % from
-   auth('hello@example.com'-'1234') % user-password
-    ).
-
-site('example.com'). % name of the site
+% name of the site
+site('example.com').

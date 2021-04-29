@@ -1,8 +1,9 @@
 body {
 	font-family: helvetica, sans;
 	margin:auto;
-	max-width:40em;
+	max-width:30rem;
 	padding:0 0.5em 1em 0.5em;
+	overflow-y: scroll;
 }
 
 a:link, a:visited {
@@ -43,10 +44,6 @@ li {
 
 .action {
 	margin-bottom: 1em;
-}
-
-.share {
-	font-size: small;
 }
 
 header {
