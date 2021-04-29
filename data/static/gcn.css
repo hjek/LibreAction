@@ -1,0 +1,69 @@
+body {
+	font-family: helvetica, sans;
+	margin:auto;
+	max-width:40em;
+	padding:0 0.5em 1em 0.5em;
+}
+
+a:link, a:visited {
+	color: inherit;
+	text-decoration: none;
+}
+
+h1 {
+	text-align: center;
+}
+
+h2 {
+	margin: 0;
+}
+
+progress {
+	width: 100%;
+}
+
+ul {
+	padding: 0;
+}
+
+li {
+	margin-bottom: 2em;
+	list-style: none;
+}
+
+header {
+	border-left: 0.1em solid black;
+	padding-left: 0.5em;
+}
+
+legend {
+	font-weight: bold;
+}
+
+fieldset {
+	border: 0.1em solid black;
+}
+
+h2 {
+	display: inline-block;
+}
+
+label {
+	font-size: small;
+}
+
+.location {
+	font-weight: bold;
+	font-size: small;
+}
+
+.category {
+	font-size: smaller;
+}
+
+#ready {
+	font-weight: bold;
+}
+
+#not_ready {
+}
