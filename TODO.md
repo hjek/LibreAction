@@ -9,7 +9,7 @@
 - Email invitation links
 
 # TODOs
-- Verify submitted emails
+- Verify submitted emails / captcha / sockpuppet prevention
 - Deal with duplicate emails (Replace signup form entry on re-signup from same email address?)
 - Show nearest actions / location selector
 - CSS / styling
@@ -21,3 +21,4 @@
 - Post-signup page (e.g. show similar actions, or something)
 - Maybe location and deadline should be optional? (global actions with no time limit)
 - Automatically load real actions when they're there. Otherwise load examples.
+

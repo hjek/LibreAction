@@ -1,4 +1,3 @@
-specs
-data/config.pl
-data/actions/*
-data/signups.pl
+.specs
+data
+data.example/signups.pl

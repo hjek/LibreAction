@@ -3,19 +3,24 @@
 :- module(gcn, [main/1]).
 :- autoload_path(library(http)).
 :- use_module(library(persistency)).
+:- use_module(library(xpath)).
 :- (not(pack_info(smtp)) -> pack_install(smtp); true), use_module(library(smtp)).
 
-:- expand_file_name('data/*config.pl',[Configuration|_]),
-   consult(Configuration).
-
 :- persistent commitment(details).
-:- db_attach('data/signups.pl', []).
 
 :- dynamic action/2.
-:- retractall(action(_,_)),
-   expand_file_name('data/*actions',[Actions_dir|_]),
-   findall(Action_file,directory_member(Actions_dir,Action_file,[]),Action_files),
-   maplist(load_files,Action_files).
+
+load_data(Data_dir) :-
+   retractall(action(_,_)),
+   swritef(Actions_glob,'%w/actions/*.pl', [Data_dir]),
+   expand_file_name(Actions_glob,Action_files),
+   maplist(load_files,Action_files),
+   swritef(Config_file,'%w/config.pl', [Data_dir]),
+   consult(Config_file),
+   swritef(Db_file,'%w/signups.pl', [Data_dir]),
+   db_attach(Db_file, []).
+
+% load_sgml('data.example/actions/apples.xml',DOM,[]), xpath(DOM, //title(content), A).
 
 :- http_handler(root(.),
 	root_handler,[]).
@@ -24,7 +29,7 @@
 	action_handler(Method),
 	[method(Method), methods([get,post])]).
 
-user:file_search_path(static, 'data/static').
+user:file_search_path(static, static).
 :- http_handler(root(.), serve_files_in_directory(static), [prefix]).
 
 
@@ -74,7 +79,7 @@ action_share(Id,Element) :-
 	action(Id,Details),
 	member(title(Title),Details),
 	swritef(Mailto_link,'mailto:?subject=%w&body=%w%w',[Title,Site,Action_link]),
-	Element = p(class(share),a(href(Mailto_link), 'Invite friends to attend.')).
+	Element = p(class(share),a(href(Mailto_link), button('Invite friends to attend'))).
 
 action_progress(Id,Element) :-
 	action(Id,Details),
@@ -237,6 +242,9 @@ notify_everyone_if_ready(_Action_id):-
 main(Argv):-
 	argv_options(Argv, _RestArgv, Options),
 	(member(port(Port),Options) -> true; Port=8080),
+	% load data.example if there's no ./data
+	(exists_directory(data) -> Data_dir='data'; Data_dir='data.example'),
 	writef("Serving on :%w.\n", [Port]),
+	load_data(Data_dir),
 	http_server(http_dispatch, [port(Port)]).
 
