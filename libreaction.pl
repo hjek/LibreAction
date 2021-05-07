@@ -1,6 +1,6 @@
 #!/usr/bin/env -S swipl -q --stack_limit=4m -g main
 
-:- module(gcn, [main/1]).
+:- module(libreaction, [main/1]).
 :- autoload_path(library(http)).
 :- use_module(library(persistency)).
 :- use_module(library(xpath)).
@@ -39,13 +39,13 @@ root_handler(Request):-
 		location(Location, [atom, optional(true)])
 		]),
 	action_list_page(Category,Location,Page),
-	reply_gcn_page(Page).
+	reply_action_page(Page).
 
-reply_gcn_page(Page) :-
+reply_action_page(Page) :-
 	reply_html_page([
-	    title('Get Courage Now'),
-	    \html_requires(root('gcn.css'))],
-	  section([h1(a(href(/),'Get Courage Now')),Page])).
+	    title('LibreAction'),
+	    \html_requires(root('default.css'))],
+	  section([h1(a(href(/),'LibreAction')),Page])).
 
 action_header(Id,Element) :-
 	action(Id, Details),
@@ -134,7 +134,7 @@ action_handler(get, Request):-
 	http_parameters(Request,[
 		id(Action_id,[])]),
 	signup_page(Action_id,Page),
-	reply_gcn_page(Page).
+	reply_action_page(Page).
 
 action_handler(post, Request):-
 	http_parameters(Request,[
@@ -161,7 +161,7 @@ action_handler(post, Request):-
 	  Share,
 	  % Should show similar actions instead, perhaps
 	  p(a(href(Link),'Return to action page.'))]),
-	reply_gcn_page(Page).
+	reply_action_page(Page).
 
 action_commitments_count(Action_id, Commitments_count) :-
   findall(_Commitment, (commitment(Details), member(id(Action_id),Details)), Commitments),

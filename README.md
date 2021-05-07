@@ -1,22 +1,23 @@
-# Get Courage Now
-A web app to sign up for conditional commitment.
+A web app for promoting actions allowing for conditional commitment sign-up.
 
 ## How do I get started?
-This documentation should help you get GCN running on your own computer. If you find the documentation confusing or inadequate, [please send me an email](mailto:hjek@member.fsf.org) or report an issue here.
+This documentation should help you get LibreAction running on your own computer. If you find the documentation confusing or inadequate, [please send me an email](mailto:hjek@member.fsf.org) or report an issue here.
 
-## Running the app
-First download [the latest version of GCN](https://github.com/hjek/get-courage-now/archive/refs/heads/main.zip) and unzip it. Then:
-### Mac OS
-* Double-click on `gcn.command`.
-### Windows
+## Testing / development setup
+First download [the latest version of LibreAction](https://github.com/hjek/get-courage-now/archive/refs/heads/main.zip) and unzip it.
+
+#### Mac OS
+* [Disable Gatekeeper](https://osxdaily.com/2012/07/27/app-cant-be-opened-because-it-is-from-an-unidentified-developer/).
+* Double-click on `libreaction.command`.
+#### Windows
 * [Download SWI Prolog for Windows](https://www.swi-prolog.org/download/stable/bin/swipl-8.2.4-1.x64.exe.envelope)
-* Double-click on `gcn.pl`
-### Debian
+* Double-click on `libreaction.pl`
+#### Debian
 * Install SWI Prolog: `sudo apt install swi-prolog`
-* Run the app: `./gcn.pl`
+* Run the app: `./libreaction.pl`
 
-## Trying the app
-- You can try the web app [here](https://localhost:8080) and sign up for example actions.
+### Trying it out
+- Open [localhost:8080](https://localhost:8080) in your web browser and you're ready to sign up for example actions.
 
 ## Next steps
 - Add configuration to `data/config.pl`. See `data.example/config.pl` for reference.
