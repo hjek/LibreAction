@@ -15,8 +15,8 @@ data(data) :-
 % if 'data' doesn't exist, use 'data.example'
 data('data.example').
 
-% new XML-based action format
 action(Id,Details,Description) :-
+% parse the actions from XML
   data(Data_dir),
   swritef(Actions_glob,'%w/actions/*.xml', [Data_dir]),
   expand_file_name(Actions_glob, Action_files),
@@ -24,8 +24,6 @@ action(Id,Details,Description) :-
   load_xml(Action_file,DOM,[]),
   xpath(DOM, //action, element(action, Details, Description)),
   member(id=Id, Details).
-
-%  load_sgml('data.example/actions/apples.xml',DOM,[]), xpath(DOM, //title(content), A).
 
 :- http_handler(root(.),
 	root_handler,[]).
@@ -89,23 +87,21 @@ action_progress(Id,Element) :-
 	action_commitments_count(Id, Signups_count),
 	Element = div([
 			small(label([Signups_count,' of ',Target,' commitments.'])),
-			progress([max(Target), value(Signups_count)],[])]).
+			progress([max(Target), value(Signups_count)],[])]),!.
+
+action_progress(Id,Element):-
+% If there's no target for signups.
+	action_commitments_count(Id, Signups_count),
+	Element = div([small(label([Signups_count,' commitments.']))]).
 
 action_signup_form(Id,Element) :-
+	http_link_to_id(action_handler, [id(Id),ready('no')], Not_ready_link),
 	Element = form([action(action),method(post)],fieldset([
 		legend('Get involved'),
 		input([name(action), type(hidden), value(Id)],[]),
 		p(input([name(email), type(email), required(required), placeholder('my_name@example.com')],[])),
 		p(button([class(ready),type(submit), name(ready), value(true)], 'I\'m ready, sign me up now')),
-		details([summary('I\'m not ready yet'),
-			ul([
-			li('Which of the following would support you sufficiently to be ready?'),
-			li(label([input([type(checkbox), name(support), value(childcare)]), 'I need free child care.'])),
-			li(label([input([type(checkbox), name(support), value(transport)]), 'I need transport to and back.'])),
-			li(label([input([type(checkbox), name(support), value(friend)]), 'I need to be invited by a friend.']))
-			]),
-			p(button([class(ready),type(submit), name(ready), value(true)], 'Sign me up'))])
-		])).
+		p(a(href(Not_ready_link), button(form(none),'I\'m not ready yet')))])).
 
 category_location_actions(Category,Location,Action_list):-
 	findall(List_item,
@@ -132,13 +128,40 @@ action_list_page(Category,Location,Page) :-
 	category_location_actions(Category,Location,List),
 	Page = div([Filter,nav(ul(List))]).
 
+not_ready_page(Id,Page):-
+	action_header(Id, Action_header),
+	Page = div([
+		Action_header,
+		form([action(action),method(post)],
+			fieldset([legend('I\'m not ready yet'),
+			input([name(action), type(hidden), value(Id)],[]),
+			ul([
+			li('Which of the following would support you sufficiently to be ready?'),
+			li(label([input([type(checkbox), name(support), value(childcare)]), 'I need free child care.'])),
+			li(label([input([type(checkbox), name(support), value(transport)]), 'I need transport to and back.'])),
+			li(label([input([type(checkbox), name(support), value(friend)]), 'I need to be invited by a friend.']))
+			]),
+			p(input([name(email), type(email), required(required), placeholder('my_name@example.com')],[])),
+			p(button([class(ready),type(submit), name(ready), value(true)], 'Sign me up now'))]))]).
+
 action_handler(get, Request):-
+% not ready yet
+	http_parameters(Request,[
+		id(Action_id,[]),
+		ready(Ready,[optional(true)])]),
+	ground(Ready),
+	not_ready_page(Action_id,Page),
+	reply_action_page(Page).
+
+action_handler(get, Request):-
+% initial action view
 	http_parameters(Request,[
 		id(Action_id,[])]),
 	signup_page(Action_id,Page),
 	reply_action_page(Page).
 
 action_handler(post, Request):-
+% sign up!
 	http_parameters(Request,[
 		action(Id, [optional(false)]),
 		email(Email, [length > 1]),
@@ -215,14 +238,16 @@ send_email(_,_,_) :-
 
 send_signup_confirmation_email(Email_to,Action_id) :-
 	Subject = 'Signed up',
-	action(Action_id, _Details, Description),
-	string_concat('You signed up for the following action: \n\n',Description,Text),
+	action(Action_id, Details, _Description),
+	member(title=Title, Details),
+	string_concat('You signed up for the following action: \n\n',Title,Text),
 	send_email(Email_to,Subject,Text).
 
 notify(Email_to,Action_id):-
 	Subject = 'Action ready',
-	action(Action_id, _Details, Description),
-	string_concat('The target has been reached for following action: \n\n',Description,Text),
+	action(Action_id, Details, _Description),
+	member(title=Title, Details),
+	string_concat('The target has been reached for following action: \n\n',Title,Text),
 	send_email(Email_to,Subject,Text).
 
 notify_everyone_if_ready(Action_id):-
