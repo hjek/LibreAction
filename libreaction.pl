@@ -21,9 +21,10 @@ action(Id,Details,Description) :-
   swritef(Actions_glob,'%w/actions/*.xml', [Data_dir]),
   expand_file_name(Actions_glob, Action_files),
   member(Action_file,Action_files),
+  file_base_name(Action_file,Action_file_base),
+  file_name_extension(Id, 'xml', Action_file_base),
   load_xml(Action_file,DOM,[]),
-  xpath(DOM, //action, element(action, Details, Description)),
-  member(id=Id, Details).
+  xpath(DOM, //action, element(action, Details, Description)).
 
 :- http_handler(root(.),
 	root_handler,[]).
