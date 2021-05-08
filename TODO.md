@@ -21,4 +21,6 @@
 - Post-signup page (e.g. show similar actions, or something)
 - Maybe location and deadline should be optional? (global actions with no time limit)
 - Automatically load real actions when they're there. Otherwise load examples.
-
+- GDPR (data deletion, data export, data storage policy)
+- disable Javascript via CORS headers
+- possible for those who sign up to add: personal data + training + location

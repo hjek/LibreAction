@@ -6,21 +6,26 @@
 :- use_module(library(xpath)).
 :- (not(pack_info(smtp)) -> pack_install(smtp); true), use_module(library(smtp)).
 
+% database location has to be fixed
 :- persistent commitment(details).
+:- db_attach('db.pl', []).
 
-:- dynamic action/2.
+data(data) :-
+	exists_directory('data'),!.
+% if 'data' doesn't exist, use 'data.example'
+data('data.example').
 
-load_data(Data_dir) :-
-   retractall(action(_,_)),
-   swritef(Actions_glob,'%w/actions/*.pl', [Data_dir]),
-   expand_file_name(Actions_glob,Action_files),
-   maplist(load_files,Action_files),
-   swritef(Config_file,'%w/config.pl', [Data_dir]),
-   consult(Config_file),
-   swritef(Db_file,'%w/signups.pl', [Data_dir]),
-   db_attach(Db_file, []).
+% new XML-based action format
+action(Id,Details,Description) :-
+  data(Data_dir),
+  swritef(Actions_glob,'%w/actions/*.xml', [Data_dir]),
+  expand_file_name(Actions_glob, Action_files),
+  member(Action_file,Action_files),
+  load_xml(Action_file,DOM,[]),
+  xpath(DOM, //action, element(action, Details, Description)),
+  member(id=Id, Details).
 
-% load_sgml('data.example/actions/apples.xml',DOM,[]), xpath(DOM, //title(content), A).
+%  load_sgml('data.example/actions/apples.xml',DOM,[]), xpath(DOM, //title(content), A).
 
 :- http_handler(root(.),
 	root_handler,[]).
@@ -48,10 +53,10 @@ reply_action_page(Page) :-
 	  section([h1(a(href(/),'LibreAction')),Page])).
 
 action_header(Id,Element) :-
-	action(Id, Details),
-	member(title(Title),Details),
-	member(category(Category),Details),
-	member(location(Location),Details),
+	action(Id, Details, _Description),
+	member(title=Title,Details),
+	member(category=Category,Details),
+	member(location=Location,Details),
 	http_link_to_id(action_handler, [id(Id)], Action_link),
 	http_link_to_id(root_handler, [category(Category)], Category_link),
 	http_link_to_id(root_handler, [location(Location)], Location_link),
@@ -64,26 +69,23 @@ action_header(Id,Element) :-
 	Progress]).
 
 action_body(Id,Element) :-
-	action(Id,Details),
-	member(description(Description),Details),
+	action(Id,_Details,Description),
 	action_signup_form(Id,Signup_form),
-	action_share(Id,Share),
 	Element = div([
 		article(p(Description)),
-		Share,
 		Signup_form]).
 
 action_share(Id,Element) :-
 	site(Site),
 	http_link_to_id(action_handler, [id(Id)], Action_link),
-	action(Id,Details),
-	member(title(Title),Details),
+	action(Id,Details,_Description),
+	member(title=Title,Details),
 	swritef(Mailto_link,'mailto:?subject=%w&body=%w%w',[Title,Site,Action_link]),
 	Element = p(class(share),a(href(Mailto_link), button('Invite friends to attend'))).
 
 action_progress(Id,Element) :-
-	action(Id,Details),
-	member(target(Target),Details),
+	action(Id,Details,_Description),
+	member(target=Target,Details),
 	action_commitments_count(Id, Signups_count),
 	Element = div([
 			small(label([Signups_count,' of ',Target,' commitments.'])),
@@ -107,9 +109,9 @@ action_signup_form(Id,Element) :-
 
 category_location_actions(Category,Location,Action_list):-
 	findall(List_item,
-	  (action(Id,Details),
-	   member(category(Category), Details),
-	   member(location(Location), Details),
+	  (action(Id,Details,_Description),
+	   member(category=Category, Details),
+	   member(location=Location, Details),
 	   action_header(Id,Element),
 	   List_item = li(Element)
 	   ),
@@ -145,7 +147,7 @@ action_handler(post, Request):-
 		]),
 	get_time(Now),
 	% check that action exists
-	action(Id, _),
+	action(Id, _Details, _Decription),
 	% prevent duplicate signups
 	(commitment(Details),
 	 member(email(Email),Details),
@@ -168,8 +170,8 @@ action_commitments_count(Action_id, Commitments_count) :-
   length(Commitments, Commitments_count).
 
 target_reached(Action_id) :-
-	action(Action_id, Details),
-	member(target(Target), Details),
+	action(Action_id, Details, _Description),
+	member(target=Target, Details),
 	action_commitments_count(Action_id, Commitments_count),
 	% Commitments_count >= Target.
 	% only send notification when the *exact* taget is reached
@@ -183,8 +185,7 @@ signup_page(Action_id,Page):-
 	Action_body]).
 
 action_ready_mail_text(Action_id, Out) :-
-	action(Action_id, Details),
-	member(description(Description), Details),
+	action(Action_id, _Details, Description),
 	format(Out, 'Ready for action. Enough people have signed up:,\n\n', []),
 	format(Out, Description, []).
 
@@ -214,15 +215,13 @@ send_email(_,_,_) :-
 
 send_signup_confirmation_email(Email_to,Action_id) :-
 	Subject = 'Signed up',
-	action(Action_id, Details),
-	member(description(Description), Details),
+	action(Action_id, _Details, Description),
 	string_concat('You signed up for the following action: \n\n',Description,Text),
 	send_email(Email_to,Subject,Text).
 
 notify(Email_to,Action_id):-
 	Subject = 'Action ready',
-	action(Action_id, Details),
-	member(description(Description), Details),
+	action(Action_id, _Details, Description),
 	string_concat('The target has been reached for following action: \n\n',Description,Text),
 	send_email(Email_to,Subject,Text).
 
@@ -242,9 +241,8 @@ notify_everyone_if_ready(_Action_id):-
 main(Argv):-
 	argv_options(Argv, _RestArgv, Options),
 	(member(port(Port),Options) -> true; Port=8080),
-	% load data.example if there's no ./data
-	(exists_directory(data) -> Data_dir='data'; Data_dir='data.example'),
 	writef("Serving on :%w.\n", [Port]),
-	load_data(Data_dir),
+	data(Data_dir),
+	swritef(Config_file,'%w/config.pl', [Data_dir]), consult(Config_file),
 	http_server(http_dispatch, [port(Port)]).
 
