@@ -1,0 +1,16 @@
+<action title="Sign up for the beta" category="tech" location="online">
+	<description>
+		We'd love to have testers trying out the beta version of this web app.
+		<div><video controls='controls' src='gcn.webm'/></div>
+	</description>
+
+	<support>
+		<need>I need free childcare</need>
+		<need>I'd need someone to help me install the app</need>
+		<need>I need vegan snacks to eat while I'm testing it</need>
+		<role>cooking</role>
+		<role>promotion</role>
+		<role>CSS</role>
+	</support>
+</action>
+

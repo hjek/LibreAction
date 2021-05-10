@@ -5,7 +5,7 @@ Download [the latest version of LibreAction](https://github.com/hjek/LibreAction
 
 - Mac OS
 	* [Disable Gatekeeper](https://osxdaily.com/2012/07/27/app-cant-be-opened-because-it-is-from-an-unidentified-developer/).
-	* Double-click on `libreaction.command`.
+	* Double-click on `libreaction.mac_os.command`.
 - Windows
 	* [Download SWI Prolog for Windows](https://www.swi-prolog.org/download/stable/bin/swipl-8.2.4-1.x64.exe.envelope)
 	* Double-click on `libreaction.pl`
@@ -16,8 +16,9 @@ Download [the latest version of LibreAction](https://github.com/hjek/LibreAction
 Try it out by visiting [localhost:8080](https://localhost:8080) in your web browser.
 
 ## Next steps
-- Add configuration to `data/config.pl`. See `data.example/config.pl` for reference.
-- Create a folder `data/actions/` and add some action files (XML). See `data.example/actions/` for examples.
+- Add configuration to `data/config.pl`. See [`data.example/config.pl`](./data.example/config.pl) for reference.
+- Create a folder `data/actions/` and add some action files (XML). See [`data.example/actions/`](./data.example/actions/) for examples.
+- If you want to embed images or video in your post, you can put them in the `static` folder and they'll be available in the web app root, `/`.
 
 ## License
 [GNU AGPLv3 or later](https://www.gnu.org/licenses/agpl-3.0.en.html)  

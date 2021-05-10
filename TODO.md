@@ -1,26 +1,15 @@
-# What is working so far
-- Display listing of actions
-	- Filter by location
-	- Filter by category
-- Sign up for actions
-	- Receive email confirmation
-- Notification when the action target is reached
-- Progress bar for each action
-- Email invitation links
-
 # TODOs
-- Verify submitted emails / captcha / sockpuppet prevention
-- Deal with duplicate emails (Replace signup form entry on re-signup from same email address?)
+1. only show "i'm not ready" if there are other options available
+2. look at the xml structure of the action...
+3. show last "motivator"
+- Verify submitted emails / captcha / spam prevention
 - Show nearest actions / location selector
-- CSS / styling
-- Easy-to-use documentation
 - Buddy pair-up
 - SMS text message confirmation
+- Queries
 - Easy action creation form
-- Action expiry date / deadline. Filter by deadline.
-- Post-signup page (e.g. show similar actions, or something)
-- Maybe location and deadline should be optional? (global actions with no time limit)
-- Automatically load real actions when they're there. Otherwise load examples.
+- Optional action expiry date / deadline. Filter by deadline.
 - GDPR (data deletion, data export, data storage policy)
 - disable Javascript via CORS headers
 - possible for those who sign up to add: personal data + training + location
+- Nicely formatted emails

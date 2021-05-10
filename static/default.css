@@ -30,11 +30,13 @@ h2 {
 	margin: 0;
 }
 
-progress {
+progress, select{
 	width: 100%;
+	text-overflow: ellipsis;
+	white-space: pre-wrap;
 }
 
-img, video, audio {
+select, img, video, audio {
 	max-width: 100%;
 }
 

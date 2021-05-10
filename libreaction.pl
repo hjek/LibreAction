@@ -1,30 +1,65 @@
 #!/usr/bin/env -S swipl -q --stack_limit=4m -g main
 
-:- module(libreaction, [main/1]).
+:- module(libreaction, [main/1,action/3]).
 :- autoload_path(library(http)).
 :- use_module(library(persistency)).
 :- use_module(library(xpath)).
 :- (not(pack_info(smtp)) -> pack_install(smtp); true), use_module(library(smtp)).
 
-% database location has to be fixed
+
+ %%%%%%%%%
+ % MODEL %
+ %%%%%%%%%
+ 
+%% database location has to be fixed
 :- persistent commitment(details).
 :- db_attach('db.pl', []).
 
-data(data) :-
-	exists_directory('data'),!.
+% app configuration
+actions_dir(actions) :-
+	exists_directory(actions),!.
 % if 'data' doesn't exist, use 'data.example'
-data('data.example').
+actions_dir('actions.example').
+
+
+action_id(File,Id) :-
+  actions_dir(Actions_dir),
+  swritef(Glob,'./%w/*.xml', [Actions_dir]),
+  expand_file_name(Glob, Files),
+  member(File,Files),
+  file_base_name(File,File_base),
+  file_name_extension(Id, 'xml', File_base).
 
 action(Id,Details,Description) :-
 % parse the actions from XML
-  data(Data_dir),
-  swritef(Actions_glob,'%w/actions/*.xml', [Data_dir]),
-  expand_file_name(Actions_glob, Action_files),
-  member(Action_file,Action_files),
-  file_base_name(Action_file,Action_file_base),
-  file_name_extension(Id, 'xml', Action_file_base),
-  load_xml(Action_file,DOM,[]),
-  xpath(DOM, //action, element(action, Details, Description)).
+  action_id(File,Id),
+  load_xml(File,DOM,[]),
+  xpath(DOM, //action, element(action, Details, Action)),
+  xpath(Action, //description, element(description, _, Description)).
+
+action_role(Id,Role) :-
+  action_id(File,Id),
+  load_xml(File,DOM,[]), xpath(DOM, //role(content), [Role]).
+
+action_need(Id,Need) :-
+  action_id(File,Id),
+  load_xml(File,DOM,[]), xpath(DOM, //need(content), [Need]).
+
+action_commitments_count(Action_id, Commitments_count) :-
+  findall(_Commitment, (commitment(Details), member(action(Action_id),Details)), Commitments),
+  length(Commitments, Commitments_count).
+
+target_reached(Action_id) :-
+  action(Action_id, Details, _Description),
+  member(target=Target, Details),
+  action_commitments_count(Action_id, Commitments_count),
+  % Commitments_count >= Target.
+  % only send notification when the *exact* taget is reached
+  Commitments_count = Target.
+
+ %%%%%%%%%%%%%%%%%%%%%
+ % VIEW / CONTROLLER %
+ %%%%%%%%%%%%%%%%%%%%%
 
 :- http_handler(root(.),
 	root_handler,[]).
@@ -50,6 +85,24 @@ reply_action_page(Page) :-
 	    title('LibreAction'),
 	    \html_requires(root('default.css'))],
 	  section([h1(a(href(/),'LibreAction')),Page])).
+
+action_role_select(Id, Element) :-
+	Role_label = 'I\'d like to help out with ',
+	action_role(Id,_Role), !,
+	findall(li([input([type(radio),name(role),value(Role)],[]),label(Role)]),action_role(Id,Role),Roles),
+	Element = label([p(Role_label), ul(Roles)]).
+
+% if no roles are defined
+action_role_select(_Id, p([])).
+
+action_need_select(Id, Element) :-
+	Need_label = 'Which of the following would support you sufficiently to be ready?',
+	action_role(Id,_Need), !,
+	findall(li([input([type(checkbox),name(need),value(Need)],[]),label(Need)]),action_need(Id,Need),Needs),
+	Element = label([p(Need_label), ul(Needs)]).
+
+% if no needs are defined
+action_need_select(_Id, p([])).
 
 action_header(Id,Element) :-
 	action(Id, Details, _Description),
@@ -87,16 +140,16 @@ action_progress(Id,Element) :-
 	member(target=Target,Details),
 	action_commitments_count(Id, Signups_count),
 	Element = div([
-			small(label([Signups_count,' of ',Target,' commitments.'])),
+			small(label([Signups_count,' of ',Target,' signed up.'])),
 			progress([max(Target), value(Signups_count)],[])]),!.
 
 action_progress(Id,Element):-
 % If there's no target for signups.
 	action_commitments_count(Id, Signups_count),
-	Element = div([small(label([Signups_count,' commitments.']))]).
+	Element = div([small(label([Signups_count,' signed up.']))]).
 
 action_signup_form(Id,Element) :-
-	http_link_to_id(action_handler, [id(Id),ready('no')], Not_ready_link),
+	http_link_to_id(action_handler, [id(Id),ready('not_yet')], Not_ready_link),
 	Element = form([action(action),method(post)],fieldset([
 		legend('Get involved'),
 		input([name(action), type(hidden), value(Id)],[]),
@@ -131,19 +184,44 @@ action_list_page(Category,Location,Page) :-
 
 not_ready_page(Id,Page):-
 	action_header(Id, Action_header),
+	action_need_select(Id, Need_select),
+	http_link_to_id(action_handler, [id(Id),ready('support')], Support_link),
+	Support_label = 'I cannot join regardless but can support in other ways',
 	Page = div([
 		Action_header,
 		form([action(action),method(post)],
 			fieldset([legend('I\'m not ready yet'),
 			input([name(action), type(hidden), value(Id)],[]),
-			ul([
-			li('Which of the following would support you sufficiently to be ready?'),
-			li(label([input([type(checkbox), name(support), value(childcare)]), 'I need free child care.'])),
-			li(label([input([type(checkbox), name(support), value(transport)]), 'I need transport to and back.'])),
-			li(label([input([type(checkbox), name(support), value(friend)]), 'I need to be invited by a friend.']))
-			]),
+			p(Need_select),
 			p(input([name(email), type(email), required(required), placeholder('my_name@example.com')],[])),
-			p(button([class(ready),type(submit), name(ready), value(true)], 'Sign me up now'))]))]).
+			p(button([class(ready),type(submit), name(ready), value(true)], 'Sign me up now')),
+			p(a(href(Support_link), button(form(none),Support_label)))
+			]))]).
+
+support_page(Id,Page):-
+	action_header(Id, Action_header),
+	action_role_select(Id, Role_select),
+	Page = div([
+		Action_header,
+		form([action(action),method(post)],
+			fieldset([legend('Supporting roles'),
+			p(Role_select),
+			input([name(action), type(hidden), value(Id)],[]),
+			p(input([name(email), type(email), required(required), placeholder('my_name@example.com')],[])),
+			p(button([class(ready),type(submit), name(ready), value(true)], 'Sign me up for support'))
+			]))]).
+
+
+
+action_handler(get, Request):-
+% can't join
+	http_parameters(Request,[
+		id(Action_id,[]),
+		ready(Ready,[optional(true)])]),
+	ground(Ready),
+	Ready = 'support',
+	support_page(Action_id,Page),
+	reply_action_page(Page).
 
 action_handler(get, Request):-
 % not ready yet
@@ -151,6 +229,7 @@ action_handler(get, Request):-
 		id(Action_id,[]),
 		ready(Ready,[optional(true)])]),
 	ground(Ready),
+	Ready = 'not_yet',
 	not_ready_page(Action_id,Page),
 	reply_action_page(Page).
 
@@ -167,7 +246,8 @@ action_handler(post, Request):-
 		action(Id, [optional(false)]),
 		email(Email, [length > 1]),
 		ready(Ready, [length > 1]),
-		support(Support, [list(atom)])
+		need(Need, [list(atom)]),
+		role(Role, [list(atom)])
 		]),
 	get_time(Now),
 	% check that action exists
@@ -175,9 +255,15 @@ action_handler(post, Request):-
 	% prevent duplicate signups
 	(commitment(Details),
 	 member(email(Email),Details),
-	 member(id(Id),Details) ->
+	 member(action(Id),Details) ->
 	   retract_commitment(Details); true),
-	assert_commitment([id(Id), email(Email), time(Now), ready(Ready), support(Support)]),
+	assert_commitment([
+	  action(Id),
+	  email(Email),
+	  time(Now),
+	  ready(Ready),
+	  need(Need),
+	  role(Role)]),
 	action_share(Id,Share),
 	send_signup_confirmation_email(Email,Id),
 	notify_everyone_if_ready(Id),
@@ -189,18 +275,6 @@ action_handler(post, Request):-
 	  p(a(href(Link),'Return to action page.'))]),
 	reply_action_page(Page).
 
-action_commitments_count(Action_id, Commitments_count) :-
-  findall(_Commitment, (commitment(Details), member(id(Action_id),Details)), Commitments),
-  length(Commitments, Commitments_count).
-
-target_reached(Action_id) :-
-	action(Action_id, Details, _Description),
-	member(target=Target, Details),
-	action_commitments_count(Action_id, Commitments_count),
-	% Commitments_count >= Target.
-	% only send notification when the *exact* taget is reached
-	Commitments_count = Target.
-
 signup_page(Action_id,Page):-
 	action_header(Action_id, Action_header),
 	action_body(Action_id, Action_body),
@@ -210,7 +284,7 @@ signup_page(Action_id,Page):-
 
 action_ready_mail_text(Action_id, Out) :-
 	action(Action_id, _Details, Description),
-	format(Out, 'Ready for action. Enough people have signed up:,\n\n', []),
+	format(Out, 'Ready for action. Enough people signed up:,\n\n', []),
 	format(Out, Description, []).
 
 text_stream(Text, Out) :-
@@ -264,11 +338,14 @@ notify_everyone_if_ready(Action_id):-
 notify_everyone_if_ready(_Action_id):-
 	true.
 
+ %%%%%%%%
+ % MAIN %
+ %%%%%%%%
+
 main(Argv):-
 	argv_options(Argv, _RestArgv, Options),
 	(member(port(Port),Options) -> true; Port=8080),
 	writef("Serving on :%w.\n", [Port]),
-	data(Data_dir),
-	swritef(Config_file,'%w/config.pl', [Data_dir]), consult(Config_file),
+	consult('config.example.pl'),
 	http_server(http_dispatch, [port(Port)]).
 
