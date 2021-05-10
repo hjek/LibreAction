@@ -3,40 +3,40 @@
 		Key to ending the profitablity and hence continuation of fracking in America is to prevent its conversion to Liquid Natural Gas and its export to much higher paying clients abroad from various ports.
 	</description>
 	<support>
-		<need>
+		<need type="50%">
 			I need to be convinced that this campaign has at least 50% chance of winning if I donate a few hours of my time.
 		</need>
-		<need>
+		<need type="75%">
 			I need to be convinced that this campaign has at least 75% chance of winning if I donate a few hours of my time.
 		</need>
-		<need>
+		<need type="child care">
 			I need free child care.
 		</need>
-		<need>
+		<need type="transport">
 			I need transport to and back.
 		</need>
-		<need>
+		<need type="friend invite">
 			I to be invited by a friend.
 		</need>
-		<role>
+		<role type="captain">
 			Neighbourhood Team Captain
 		</role>
-		<role>
+		<role type="witness">
 			Witness
 		</role>
-		<role>
+		<role type="donor">
 			Donor
 		</role>
-		<role>
+		<role type="lawyer">
 			Lawyer
 		</role>
-		<role>
+		<role type="medic">
 			Medical Professional
 		</role>
-		<role>
+		<role type="media">
 			Media / Blogger / Filmmaker
 		</role>
-		<role>
+		<role type="cook">
 			Cook
 		</role>
 	</support>

@@ -1,11 +1,10 @@
 #!/usr/bin/env -S swipl -q --stack_limit=4m -g main
 
-:- module(libreaction, [main/1,action/3]).
+:- module(libreaction, [main/1]).
 :- autoload_path(library(http)).
 :- use_module(library(persistency)).
 :- use_module(library(xpath)).
-:- (not(pack_info(smtp)) -> pack_install(smtp); true), use_module(library(smtp)).
-
+:- use_module(email).
 
  %%%%%%%%%
  % MODEL %
@@ -61,6 +60,11 @@ target_reached(Action_id) :-
  % VIEW / CONTROLLER %
  %%%%%%%%%%%%%%%%%%%%%
 
+csp(Content, Policy) -->
+  html(meta([
+    'http-equiv'('Content-Security-Policy'),
+    content([Content, Policy])])).
+
 :- http_handler(root(.),
 	root_handler,[]).
 
@@ -81,16 +85,22 @@ root_handler(Request):-
 	reply_action_page(Page).
 
 reply_action_page(Page) :-
-	reply_html_page([
-	    title('LibreAction'),
-	    \html_requires(root('default.css'))],
-	  section([h1(a(href(/),'LibreAction')),Page])).
+	reply_html_page(
+		[title('LibreAction'),
+		% don't include resources from other sites
+		\csp('default-src', "'self' data:;"),
+		\csp('style-src', "'self';"),
+		% disable javascript ;)
+		\csp('script-src', "'none';"),
+		\csp('img-src', "'self' data:;"),
+		\html_requires(root('default.css'))],
+		section([h1(a(href(/),'LibreAction')),Page])).
 
 action_role_select(Id, Element) :-
 	Role_label = 'I\'d like to help out with ',
 	action_role(Id,_Role), !,
-	findall(li([input([type(radio),name(role),value(Role)],[]),label(Role)]),action_role(Id,Role),Roles),
-	Element = label([p(Role_label), ul(Roles)]).
+	findall(li(label([input([type(radio),name(role),value(Role)],[]),Role])),action_role(Id,Role),Roles),
+	Element = p([p(Role_label), ul(Roles)]).
 
 % if no roles are defined
 action_role_select(_Id, p([])).
@@ -98,8 +108,8 @@ action_role_select(_Id, p([])).
 action_need_select(Id, Element) :-
 	Need_label = 'Which of the following would support you sufficiently to be ready?',
 	action_role(Id,_Need), !,
-	findall(li([input([type(checkbox),name(need),value(Need)],[]),label(Need)]),action_need(Id,Need),Needs),
-	Element = label([p(Need_label), ul(Needs)]).
+	findall(li(label([input([type(checkbox),name(need),value(Need)],[]),Need])),action_need(Id,Need),Needs),
+	Element = p([p(Need_label), ul(Needs)]).
 
 % if no needs are defined
 action_need_select(_Id, p([])).
@@ -126,6 +136,9 @@ action_body(Id,Element) :-
 	Element = div([
 		article(p(Description)),
 		Signup_form]).
+
+% Todo: Read domain. Maybe it can be read from the requests?
+site(localhost).
 
 action_share(Id,Element) :-
 	site(Site),
@@ -282,35 +295,6 @@ signup_page(Action_id,Page):-
 	Action_header,
 	Action_body]).
 
-action_ready_mail_text(Action_id, Out) :-
-	action(Action_id, _Details, Description),
-	format(Out, 'Ready for action. Enough people signed up:,\n\n', []),
-	format(Out, Description, []).
-
-text_stream(Text, Out) :-
-% just for sending emails
-	format(Out, Text, []).
-
-send_email(Email_to,Subject,Body) :-
-	clause(email(_,_,_),_),
-	email(smtp(SMTP),from(From),auth(Password)),
-	thread_create(
-		smtp_send_mail(
-		  Email_to,
-		  text_stream(Body),
-		  [subject(Subject),
-		   from(From),
-		   smtp(SMTP),
-		   auth(Password),
-		   auth_method(login),
-		   security(starttls)
-		  ]),
-		_Thread),!.
-
-send_email(_,_,_) :-
-% if email is not set up
-  true.
-
 send_signup_confirmation_email(Email_to,Action_id) :-
 	Subject = 'Signed up',
 	action(Action_id, Details, _Description),
@@ -323,7 +307,7 @@ notify(Email_to,Action_id):-
 	action(Action_id, Details, _Description),
 	member(title=Title, Details),
 	string_concat('The target has been reached for following action: \n\n',Title,Text),
-	send_email(Email_to,Subject,Text).
+	thread_create(send_email(Email_to,Subject,Text),_Thread).
 
 notify_everyone_if_ready(Action_id):-
 	target_reached(Action_id),
@@ -346,6 +330,4 @@ main(Argv):-
 	argv_options(Argv, _RestArgv, Options),
 	(member(port(Port),Options) -> true; Port=8080),
 	writef("Serving on :%w.\n", [Port]),
-	consult('config.example.pl'),
 	http_server(http_dispatch, [port(Port)]).
-

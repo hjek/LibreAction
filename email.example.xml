@@ -1,0 +1,5 @@
+<email>
+	<host>example.com</host>
+	<from>user@example.com</from>
+	<password>1234</password>
+</email>
