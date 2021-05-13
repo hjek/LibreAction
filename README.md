@@ -1,4 +1,6 @@
-**LibreAction** — A web app for organizing actions, allowing for conditional signup.
+# LibreAction
+
+LibreAction is a web app for organizing actions, allowing for conditional signup.
 
 ## Conditional commitment
 In [Common Sense for the 21st Century](https://www.rogerhallam.com/wp-content/uploads/2019/10/Common-Sense-for-the-21st-Century_by-Roger-Hallam-Early-Draft-v0.3.pdf) RH describes how conditional commitment can help mobilisation:
@@ -23,8 +25,8 @@ Download [the latest version of LibreAction](https://github.com/hjek/LibreAction
 Try it out by visiting [localhost:8080](https://localhost:8080) in your web browser.
 
 ### Further configuration
-- Create a folder `actions` and add some action files, like `actions/my-action.xml`. See [`actions.example`](./actions.example/) for examples.
-- For sending notification emails, please enter you SMTP details in `email.xml`. See `email.example.xml` for reference.
+- Create a folder `actions` and add some action files, like `actions/my-first-action.xml`. See [`actions.example`](./actions.example/) for examples.
+- For sending notification emails, please enter you SMTP details in `email.xml`. See [`email.example.xml`](./email.example.xml) for reference.
 - If you'd like to embed images or video in your action descriptions, you can put them in the `static` folder and they'll be available in the web app root, `/`.
 
 ## Development
