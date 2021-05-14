@@ -84,13 +84,13 @@ reply_action_page(Page) :-
 	reply_html_page(
 		[title('LibreAction'),
 		% don't include resources from other sites
-		\csp('default-src', "'self' data:;"),
-		\csp('style-src', "'self';"),
+		\csp('default-src', "'self' 'unsafe-inline' data:;"),
+		\csp('style-src', "'self' 'unsafe-inline';"),
 		% disable javascript ;)
 		\csp('script-src', "'none';"),
 		\csp('img-src', "'self' data:;"),
 		\html_requires(root('default.css'))],
-		section([h1(a(href(/),'LibreAction')),Page])).
+		section(Page)).
 
 action_role_select(Id, Element) :-
 	Role_label = 'I\'d like to help out with ',

@@ -1,43 +1,80 @@
 <action title="Stop fracked gas terminals" target="4000" category="environmental" location="Tacoma WA">
 	<description>
 		Key to ending the profitablity and hence continuation of fracking in America is to prevent its conversion to Liquid Natural Gas and its export to much higher paying clients abroad from various ports.
+
+
+		<style>
+			.carousel {
+				text-align: center;
+			}
+
+				.carousel input:nth-child(1):checked ~ .content > :nth-child(1),
+				.carousel input:nth-child(2):checked ~ .content > :nth-child(2),
+				.carousel input:nth-child(3):checked ~ .content > :nth-child(3)
+			{
+				display: block;
+			}
+
+			.content div {
+				display: none;
+			}
+
+			.content img {
+				height: 20rem;
+				width: 100%;
+				object-fit: cover;
+			}
+		</style>
+
+		<div class="carousel">
+			<input type="radio" name="carousel" checked="checked"></input>
+			<input type="radio" name="carousel"></input>
+			<input type="radio" name="carousel"></input>
+
+			<div class="content">
+				<div><img src="/example/ny_against_fracking.jpg"/></div>
+				<div><img src="/example/fracking.jpg"/></div>
+				<div><img src="/example/forward_on.jpg"/></div>
+			</div>
+		</div>
+
+
 	</description>
+
 	<support>
-		<need type="50%">
-			I need to be convinced that this campaign has at least 50% chance of winning if I donate a few hours of my time.
-		</need>
-		<need type="75%">
-			I need to be convinced that this campaign has at least 75% chance of winning if I donate a few hours of my time.
-		</need>
-		<need type="child care">
-			I need free child care.
-		</need>
-		<need type="transport">
-			I need transport to and back.
-		</need>
-		<need type="friend invite">
-			I to be invited by a friend.
-		</need>
-		<role type="captain">
-			Neighbourhood Team Captain
-		</role>
-		<role type="witness">
-			Witness
-		</role>
-		<role type="donor">
-			Donor
-		</role>
-		<role type="lawyer">
-			Lawyer
-		</role>
-		<role type="medic">
-			Medical Professional
-		</role>
-		<role type="media">
-			Media / Blogger / Filmmaker
-		</role>
-		<role type="cook">
-			Cook
-		</role>
+		<role>neighborhood team leader</role>
+		<role>lawyer</role>
+		<role>witness</role>
+		<role>social media</role>
+		<role>medical</role>
+		<role>transport</role>
+		<role>childcare</role>
+		<role>bail support for nvda resisters</role>
+		<role>phonebanker or peer2peer texter</role>
+		<role>provide my space for a house party</role> 
+		<role>setup/clean up</role>
+		<role>digital marketing help</role>
+		<role>outreach connector</role>
+		<role>outreach speaker help</role>
+		<role>data entry</role>
+		<role>tech help</role>
+		<role>donation of computers etc</role>
+		<role>art, design, audio, video, graphics or printing help</role>
+		<role>assembling packets or kits</role>
+		<role>donating food</role>
+		<role>donating venues for fundraising events</role>
+		<role>donating office space</role>
+		<role>emergency housing</role>
+		<role>short term employment help</role>
+		<role>donate an hour of my wage</role>
+
+		<need>I need to know that there will be enough people at the action for the campaign to have a high chance of success</need>
+		<need>I need to be more confident regarding legal defense</need>
+		<need>I need bail support</need>
+		<need>I'm a party animal: I need to be invited to a party of rebels after the action</need>
+		<need>I need transport to the event</need>
+		<need>I to be invited to join by a friend</need>
+		<need>I need free child care</need>
+		<need>I need temporary housing</need>
 	</support>
 </action>
