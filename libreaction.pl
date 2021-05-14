@@ -45,8 +45,7 @@ action_commitments_count(Action_id, Commitments_count) :-
   length(Commitments, Commitments_count).
 
 target_reached(Action_id) :-
-  action(Action_id, Details, _Description),
-  member(target=Target, Details),
+  action_attribute_value(Action_id,target,Target),
   action_commitments_count(Action_id, Commitments_count),
   % Commitments_count >= Target.
   % only send notification when the *exact* taget is reached
@@ -255,7 +254,7 @@ action_handler(post, Request):-
 		]),
 	get_time(Now),
 	% check that action exists
-	action(Id, _Details, _Decription),
+	action_id(_File,Id),
 	% prevent duplicate signups
 	(commitment(Details),
 	 member(email(Email),Details),
