@@ -1,6 +1,6 @@
 # LibreAction
 
-LibreAction is a web app for organizing actions, allowing for conditional signup.
+LibreAction is a web app for creating action sign-up forms, allowing for conditional commitment.
 
 ## Conditional commitment
 In [Common Sense for the 21st Century](https://www.rogerhallam.com/wp-content/uploads/2019/10/Common-Sense-for-the-21st-Century_by-Roger-Hallam-Early-Draft-v0.3.pdf) RH describes how conditional commitment can help mobilisation:
@@ -22,12 +22,28 @@ Download [the latest version of LibreAction](https://github.com/hjek/LibreAction
 	* Install SWI Prolog: `sudo apt install swi-prolog`
 	* Run the app: `./libreaction.pl`
 
-Try it out by visiting [localhost:8080](https://localhost:8080) in your web browser.
+Try it out by visiting [`localhost:8080`](http://localhost:8080) in your web browser.
 
-### Further configuration
-- Create a folder `actions` and add some action files, like `actions/my-first-action.xml`. See [`actions.example`](./actions.example/) for examples.
-- For sending notification emails, please enter you SMTP details in `email.xml`. See [`email.example.xml`](./email.example.xml) for reference.
-- If you'd like to embed images or video in your action descriptions, you can put them in the `static` folder and they'll be available in the web app root, `/`.
+
+### Creating actions
+1. Create a folder `actions` inside the `LibreAction` folder.
+2. Create an action file in a text editor. (You *must* use plain text editor, like [Atom](https://atom.io/) or [vi](https://neovim.io/). Rich text editors, like Microsoft Word, will not suffice.)
+	* Example: Create the text file `actions/quit-whatsapp.xml` with the contents below. You can access that action at [`localhost:8080/quit-whatsapp`](http://localhost:8080/quit-whatsapp).
+	```
+	<action title="Quit WhatsApp" target="100" location="online" category="tech">
+		<description>
+		Let's quit WhatsApp. 100 of us together at the same time.
+		</description>
+	</action>
+	```
+	* For an example action with support roles, see [`actions.example/fracked_gas_terminal.xml`](./actions.example/fracked_gas_terminal.xml)
+	* See [`actions.example`](./actions.example/) for more action examples.
+
+3. If you'd like to embed images or video in your action descriptions, you can put them in the `www` folder and they'll be available in the web app root.
+	* For example, you can embed `www/quit-whatsapp.png` in inside the `<description>` tag like this: `<img src="/quit-whatsapp.png"/>`
+
+### Email notifications
+For sending notification emails, please enter you SMTP details in `email.xml`. See [`email.example.xml`](./email.example.xml) for reference.
 
 ## Development
 

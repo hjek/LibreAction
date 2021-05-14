@@ -20,7 +20,6 @@ actions_dir(actions) :-
 % if 'data' doesn't exist, use 'data.example'
 actions_dir('actions.example').
 
-
 action_id(File,Id) :-
   actions_dir(Actions_dir),
   swritef(Glob,'./%w/*.xml', [Actions_dir]),
@@ -29,20 +28,17 @@ action_id(File,Id) :-
   file_base_name(File,File_base),
   file_name_extension(Id, 'xml', File_base).
 
-action(Id,Details,Description) :-
-% parse the actions from XML
+action_attribute_value(Id,Detail,Value):-
   action_id(File,Id),
   load_xml(File,DOM,[]),
-  xpath(DOM, //action, element(action, Details, Action)),
-  xpath(Action, //description, element(description, _, Description)).
+  xpath(DOM, //action, element(action, Details, _Action)),
+  member(Detail=Value,Details).
 
-action_role(Id,Role) :-
+action_element_content(Id,Element,Content):-
   action_id(File,Id),
-  load_xml(File,DOM,[]), xpath(DOM, //role(content), [Role]).
-
-action_need(Id,Need) :-
-  action_id(File,Id),
-  load_xml(File,DOM,[]), xpath(DOM, //need(content), [Need]).
+  load_xml(File,DOM,[]),
+  xpath(DOM, //action, element(action, _Details, Action)),
+  xpath(Action, //Element, element(Element, _Attributes, Content)).
 
 action_commitments_count(Action_id, Commitments_count) :-
   findall(_Commitment, (commitment(Details), member(action(Action_id),Details)), Commitments),
@@ -72,8 +68,8 @@ csp(Content, Policy) -->
 	action_handler(Method),
 	[method(Method), methods([get,post])]).
 
-user:file_search_path(static, static).
-:- http_handler(root(.), serve_files_in_directory(static), [prefix]).
+user:file_search_path(www, www).
+:- http_handler(root(.), serve_files_in_directory(www), [prefix]).
 
 
 root_handler(Request):-
@@ -98,8 +94,8 @@ reply_action_page(Page) :-
 
 action_role_select(Id, Element) :-
 	Role_label = 'I\'d like to help out with ',
-	action_role(Id,_Role), !,
-	findall(li(label([input([type(radio),name(role),value(Role)],[]),Role])),action_role(Id,Role),Roles),
+	action_element_content(Id,role,_Content), !,
+	findall(li(label([input([type(radio),name(role),value(Role)],[]),Role])),action_element_content(Id,role,[Role]),Roles),
 	Element = p([p(Role_label), ul(Roles)]).
 
 % if no roles are defined
@@ -107,18 +103,17 @@ action_role_select(_Id, p([])).
 
 action_need_select(Id, Element) :-
 	Need_label = 'Which of the following would support you sufficiently to be ready?',
-	action_role(Id,_Need), !,
-	findall(li(label([input([type(checkbox),name(need),value(Need)],[]),Need])),action_need(Id,Need),Needs),
+	action_element_content(Id,need,_Content), !,
+	findall(li(label([input([type(checkbox),name(need),value(Need)],[]),Need])),action_element_content(Id,need,[Need]),Needs),
 	Element = p([p(Need_label), ul(Needs)]).
 
 % if no needs are defined
 action_need_select(_Id, p([])).
 
 action_header(Id,Element) :-
-	action(Id, Details, _Description),
-	member(title=Title,Details),
-	member(category=Category,Details),
-	member(location=Location,Details),
+	action_attribute_value(Id,title,Title),
+	action_attribute_value(Id,category,Category),
+	action_attribute_value(Id,location,Location),
 	http_link_to_id(action_handler, [id(Id)], Action_link),
 	http_link_to_id(root_handler, [category(Category)], Category_link),
 	http_link_to_id(root_handler, [location(Location)], Location_link),
@@ -131,7 +126,7 @@ action_header(Id,Element) :-
 	Progress]).
 
 action_body(Id,Element) :-
-	action(Id,_Details,Description),
+	action_element_content(Id,description,Description),
 	action_signup_form(Id,Signup_form),
 	Element = div([
 		article(p(Description)),
@@ -143,17 +138,15 @@ site(localhost).
 action_share(Id,Element) :-
 	site(Site),
 	http_link_to_id(action_handler, [id(Id)], Action_link),
-	action(Id,Details,_Description),
-	member(title=Title,Details),
+	action_attribute_value(Id,title,Title),
 	swritef(Mailto_link,'mailto:?subject=%w&body=%w%w',[Title,Site,Action_link]),
 	Element = p(class(share),a(href(Mailto_link), button('Invite friends to attend'))).
 
 action_progress(Id,Element) :-
-	action(Id,Details,_Description),
-	member(target=Target,Details),
+	action_attribute_value(Id,target,Target),
 	action_commitments_count(Id, Signups_count),
 	Element = div([
-			small(label([Signups_count,' of ',Target,' signed up.'])),
+			small(label([Signups_count,' signed up out of minimum ',Target,'.'])),
 			progress([max(Target), value(Signups_count)],[])]),!.
 
 action_progress(Id,Element):-
@@ -172,12 +165,10 @@ action_signup_form(Id,Element) :-
 
 category_location_actions(Category,Location,Action_list):-
 	findall(List_item,
-	  (action(Id,Details,_Description),
-	   member(category=Category, Details),
-	   member(location=Location, Details),
+	  (action_attribute_value(Id,category,Category),
+	   action_attribute_value(Id,location,Location),
 	   action_header(Id,Element),
-	   List_item = li(Element)
-	   ),
+	   List_item = li(Element)),
 	  Action_list).
 
 active_filter(Category,_Location,Filter):-
@@ -297,15 +288,13 @@ signup_page(Action_id,Page):-
 
 send_signup_confirmation_email(Email_to,Action_id) :-
 	Subject = 'Signed up',
-	action(Action_id, Details, _Description),
-	member(title=Title, Details),
+	action_attribute_value(Action_id,title,Title),
 	string_concat('You signed up for the following action: \n\n',Title,Text),
 	send_email(Email_to,Subject,Text).
 
 notify(Email_to,Action_id):-
 	Subject = 'Action ready',
-	action(Action_id, Details, _Description),
-	member(title=Title, Details),
+	action_attribute_value(Action_id,title,Title),
 	string_concat('The target has been reached for following action: \n\n',Title,Text),
 	thread_create(send_email(Email_to,Subject,Text),_Thread).
 
