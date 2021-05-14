@@ -17,7 +17,7 @@ Download [the latest version of LibreAction](https://github.com/hjek/LibreAction
 	* Double-click on `libreaction.mac_os.command`.
 - Windows
 	* [Download SWI Prolog for Windows](https://www.swi-prolog.org/download/stable/bin/swipl-8.2.4-1.x64.exe.envelope)
-	* Double-click on `libreaction.pl`
+	* Double-click on `libreaction.windows.cmd`
 - Debian
 	* Install SWI Prolog: `sudo apt install swi-prolog`
 	* Run the app: `./libreaction.pl`

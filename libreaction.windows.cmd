@@ -1,0 +1,1 @@
+"%ProgramFiles%\swipl\bin\swipl.exe" -g main libreaction.pl
