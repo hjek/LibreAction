@@ -1,0 +1,5 @@
+<action title="New Action" category="none" location="nowhere">
+	<description>
+		Hello World.
+	</description>
+</action>

@@ -12,4 +12,4 @@ if ! command -v swipl
 fi
 
 # Run the app
-swipl libreaction.pl
+swipl act-now.pl

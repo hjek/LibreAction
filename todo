@@ -1,0 +1,23 @@
+notify about new actions
+simpleauth admin panel
+signal-cli message delivery
+
+"i need something else"
+"i can offer something else"
+
+printable sign-up sheet
+
+tell-the-truth demo action
+
+more forgiving editor,
+refuse to save if it's not a valid action
+
+per-user config
+
+Issue with mailto:
+   Note that some headers are inherently unsafe to include in a message
+   generated from a URL. For example, headers such as "From:", "Bcc:",
+   and so on, should never be interpreted from a URL. In general, the
+   fewer headers interpreted from the URL, the less likely it is that a
+   sending agent will create an unsafe message.
+https://datatracker.ietf.org/doc/html/rfc2368

@@ -1,10 +1,14 @@
 #!/usr/bin/env -S swipl -q --stack_limit=4m -g main
 
-:- module(libreaction, [main/1]).
+% © 2021 Pelle Hjek
+% GNU Affero General Public License version 3 or later
+
+:- module(act_now, [main/1,reply_action_page/1,actions_dir/1,action_id/2,commitment/1,action_header/2]).
 :- autoload_path(library(http)).
 :- use_module(library(persistency)).
 :- use_module(library(xpath)).
 :- use_module(email).
+:- use_module(admin).
 
  %%%%%%%%%
  % MODEL %
@@ -15,10 +19,18 @@
 :- db_attach('db.pl', []).
 
 % app configuration
-actions_dir(actions) :-
-	exists_directory(actions),!.
+actions_dir(Dir) :-
+	Dir = 'actions',
+	exists_directory(Dir),!.
 % if 'data' doesn't exist, use 'data.example'
 actions_dir('actions.example').
+
+action_id(Path,Id) :-
+% create a filepath for a given Id,
+  ground(Id),!,
+  actions_dir(Actions_dir),
+  file_name_extension(Id, 'xml', File),
+  directory_file_path(Actions_dir,File,Path).
 
 action_id(File,Id) :-
   actions_dir(Actions_dir),
@@ -81,7 +93,7 @@ root_handler(Request):-
 
 reply_action_page(Page) :-
 	reply_html_page(
-		[title('LibreAction'),
+		[title('Act Now'),
 		% don't include resources from other sites
 		\csp('default-src', "'self' 'unsafe-inline' data:;"),
 		\csp('style-src', "'self' 'unsafe-inline';"),
@@ -89,7 +101,7 @@ reply_action_page(Page) :-
 		\csp('script-src', "'none';"),
 		\csp('img-src', "'self' data:;"),
 		\html_requires(root('default.css'))],
-		section(Page)).
+		div([h1(a(href('/'),"Act Now")),section(Page)])).
 
 action_role_select(Id, Element) :-
 	Role_label = 'I\'d like to help out with ',
@@ -116,12 +128,14 @@ action_header(Id,Element) :-
 	http_link_to_id(action_handler, [id(Id)], Action_link),
 	http_link_to_id(root_handler, [category(Category)], Category_link),
 	http_link_to_id(root_handler, [location(Location)], Location_link),
+	http_link_to_id(admin_handler, [id(Id)], Admin_link),
 	action_progress(Id,Progress),
 	Element = header(class(action),[
 	h2(a(href(Action_link),Title)),
 	div([
 		span(class(location),a(href(Location_link),Location)), ' | ',
-		span(class(category),a(href(Category_link),Category))]),
+		span(class(category),a(href(Category_link),Category)), ' | ',
+		span([class(admin),title(edit)],a(href(Admin_link),'~'))]),
 	Progress]).
 
 action_body(Id,Element) :-
@@ -139,7 +153,7 @@ action_share(Id,Element) :-
 	http_link_to_id(action_handler, [id(Id)], Action_link),
 	action_attribute_value(Id,title,Title),
 	swritef(Mailto_link,'mailto:?subject=%w&body=%w%w',[Title,Site,Action_link]),
-	Element = p(class(share),a(href(Mailto_link), button('Invite friends to attend'))).
+	Element = p(class(share),a(href(Mailto_link), 'Invite friends to attend')).
 
 action_progress(Id,Element) :-
 	action_attribute_value(Id,target,Target),
@@ -172,18 +186,19 @@ category_location_actions(Category,Location,Action_list):-
 
 active_filter(Category,_Location,Filter):-
 	ground(Category),
-	Filter=p(['Category: ', Category]).
+	Filter=div(['Category: ', Category]).
 
 active_filter(_Category,Location,Filter):-
 	ground(Location),
-	Filter=p(['Location: ', Location]).
+	Filter=div(['Location: ', Location]).
 
-active_filter(_,_,p([])).
+active_filter(_,_,div([])).
 
 action_list_page(Category,Location,Page) :-
 	active_filter(Category,Location,Filter),
 	category_location_actions(Category,Location,List),
-	Page = div([Filter,nav(ul(List))]).
+	http_link_to_id(admin_handler, [], New_link),
+	Page = div([Filter,nav(ul(List)),div([class(admin),title(new)],a(href(New_link),'+'))]).
 
 not_ready_page(Id,Page):-
 	action_header(Id, Action_header),
@@ -318,4 +333,5 @@ main(Argv):-
 	argv_options(Argv, _RestArgv, Options),
 	(member(port(Port),Options) -> true; Port=8080),
 	writef("Serving on :%w.\n", [Port]),
-	http_server(http_dispatch, [port(Port)]).
+	http_server(http_dispatch, [port(Port)]),
+	set_password().

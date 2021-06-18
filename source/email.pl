@@ -1,3 +1,6 @@
+% © 2021 Pelle Hjek
+% GNU Affero General Public License version 3 or later
+
 :- module(email, [send_email/3]).
 :- (not(pack_info(smtp)) -> pack_install(smtp); true), use_module(library(smtp)).
 

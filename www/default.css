@@ -1,9 +1,24 @@
 body {
-	font-family: helvetica, sans;
+	font-family: "Crimson Pro",Gentium, serif;
 	margin:auto;
-	max-width:30rem;
-	padding: 2em 0.5em 1em 0.5em;
+	max-width:20rem;
+	padding: 2em 0.5em 10em 0.5em;
 	overflow-y: scroll;
+}
+
+h1, h2 {
+	font-family: "Fucxed Caps Latin","Fucxed Caps", Helvetica, sans-serif;
+	font-weight: normal;
+	text-align: center;
+}
+
+code, pre {
+	font-family: "computer modern typewriter",courier;
+}
+
+h3 {
+	margin:0;
+	font-style: italic;
 }
 
 a:link, a:visited {
@@ -19,12 +34,9 @@ h1 a, h2 a {
 }
 
 h2 a:visited {
-	color: gray;
+	color: rgb(80,80,80);
 }
 
-h1 {
-	text-align: center;
-}
 
 h2 {
 	margin: 0;
@@ -41,11 +53,26 @@ select, img, video, audio {
 }
 
 ul {
+	margin: 0;
 	padding: 0;
 }
 
 li {
+	margin: 0;
+	padding: 0;
 	list-style: none;
+}
+
+label {
+	display: block;
+	font-style: italic;
+	font-size: small;
+}
+
+details {
+	font-style: italic;
+	border: 0.05em solid black;
+	padding: 0.5em;
 }
 
 .action {
@@ -53,16 +80,17 @@ li {
 }
 
 header {
-	border-left: 0.1em solid black;
+	border-left: 0.05em solid black;
 	padding-left: 0.5em;
 }
 
 legend {
 	font-weight: bold;
+	text-align: center;
 }
 
 fieldset {
-	border: 0.1em solid black;
+	border: 0.05em solid black;
 }
 
 h2 {
@@ -71,11 +99,17 @@ h2 {
 
 .location {
 	font-weight: bold;
-	font-size: small;
+	font-size: smaller;
 }
 
 .category {
 	font-size: smaller;
+}
+
+.admin a {
+	font-size: smaller;
+	text-decoration: none;
+	opacity: 0.5;
 }
 
 .ready {
@@ -83,4 +117,11 @@ h2 {
 }
 
 .not_ready {
+}
+
+textarea {
+	border: 0.05em solid black;
+	width: 100%;
+	min-height: 20em;
+	resize: vertical;
 }

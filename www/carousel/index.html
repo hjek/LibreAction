@@ -1,0 +1,35 @@
+<html>
+<head>
+<style>
+	.carousel {
+		text-align: center;
+	}
+
+	.carousel input:nth-child(1):checked ~ .content div:nth-child(1),
+	.carousel input:nth-child(2):checked ~ .content div:nth-child(2),
+	.carousel input:nth-child(3):checked ~ .content div:nth-child(3)
+	{
+		display: block
+	}
+
+	.content div {
+		display: none;
+	}
+</style>
+</head>
+
+<body>
+<div class="carousel">
+<input type=radio name="carousel"></input>
+<input type=radio name="carousel"></input>
+<input type=radio name="carousel"></input>
+
+<div class="content">
+<div>foo</div>
+<div>bar</div>
+<div>baz</div>
+</div>
+</div>
+
+</body>
+</html>

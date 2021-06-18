@@ -1,0 +1,31 @@
+<html>
+<head>
+<style>
+	.buts input:nth-child(1):checked ~ div p:nth-child(1),
+	.buts input:nth-child(2):checked ~ div p:nth-child(2),
+	.buts input:nth-child(3):checked ~ div p:nth-child(3)
+	{
+		display: block
+	}
+
+	div p {
+		display: none;
+	}
+</style>
+</head>
+
+<body>
+<div class="buts">
+<input type=radio name=carousel></input>
+<input type=radio name=carousel></input>
+<input type=radio name=carousel></input>
+
+<div class="pics">
+<p>foo</p>
+<p>bar</p>
+<p>baz</p>
+</div>
+
+</div>
+</body>
+</html>
